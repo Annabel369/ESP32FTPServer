@@ -1,3 +1,4 @@
+<img width="838" height="420" alt="image" src="https://github.com/user-attachments/assets/a4fdc501-041e-48ae-b1a4-5d2304619fc6" />
 # 🤖 AI Reference for ESP32FTPServer Library
 
 Este arquivo contém as regras e a estrutura da biblioteca ESP32FTPServer para que IAs possam gerar códigos corretos.
