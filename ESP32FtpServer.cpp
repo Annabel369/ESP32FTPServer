@@ -115,6 +115,34 @@ boolean FtpServer::processCommand() {
     client.printf("227 Entering Passive Mode (%u,%u,%u,%u,%u,%u)\r\n", 
                   dataIp[0], dataIp[1], dataIp[2], dataIp[3], dataPort >> 8, dataPort & 255);
   }
+  // --- NOVO: Mudar de Diretório (Entrar em pastas) ---
+  else if (!strcmp(command, "CWD")) {
+    char path[128];
+    makePath(path);
+    File dir = SD.open(path);
+    if (dir && dir.isDirectory()) {
+      strcpy(cwdName, path);
+      if (cwdName[strlen(cwdName) - 1] != '/') strcat(cwdName, "/");
+      client.println("250 Directory changed to " + String(cwdName));
+    } else {
+      client.println("550 Directory not found");
+    }
+    if (dir) dir.close();
+  }
+  // --- NOVO: Voltar uma pasta (Up Directory) ---
+  else if (!strcmp(command, "CDUP")) {
+    if (strcmp(cwdName, "/") != 0) {
+      char * lastSlash = strrchr(cwdName, '/');
+      if (lastSlash == cwdName) {
+        strcpy(cwdName, "/");
+      } else {
+        *lastSlash = 0;
+        lastSlash = strrchr(cwdName, '/');
+        if (lastSlash) *(lastSlash + 1) = 0;
+      }
+    }
+    client.println("250 Directory changed to " + String(cwdName));
+  }
   else if (!strcmp(command, "LIST") || !strcmp(command, "NLST")) {
     if (dataConnect()) {
       client.println("150 Accepted data connection");
@@ -123,8 +151,8 @@ boolean FtpServer::processCommand() {
       int count = 0;
       while (entry = root.openNextFile()) {
         String name = String(entry.name());
-        // Remove barras iniciais para o nome aparecer correto
-        while (name.length() > 0 && (name[0] == '/' || name[0] == '\\')) name.remove(0, 1);
+        // Limpeza do nome para exibição correta na lista
+        if (name.lastIndexOf('/') >= 0) name = name.substring(name.lastIndexOf('/') + 1);
         
         if (entry.isDirectory()) 
           data.printf("drwxr-xr-x 1 owner group %8u Jan 01 2026 %s\r\n", 0, name.c_str());
@@ -160,6 +188,12 @@ boolean FtpServer::processCommand() {
       millisBeginTrans = millis();
       bytesTransfered = 0;
     } else { client.println("451 Error"); }
+  }
+  else if (!strcmp(command, "MKD")) { // Criar Pasta
+    char path[128];
+    makePath(path);
+    if (SD.mkdir(path)) client.printf("257 \"%s\" created\r\n", parameters);
+    else client.println("550 Create directory failed");
   }
   else if (!strcmp(command, "QUIT")) {
     client.println("221 Goodbye");
