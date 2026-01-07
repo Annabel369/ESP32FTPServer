@@ -13,11 +13,16 @@ Modified to better support subdirectories
 # 📌 Visão GeralEsta biblioteca transforma o ESP32 em um servidor FTP estável, otimizado para arquivos pesados (MP4, MKV, ZIP) e suporte a subpastas no cartão SD.
 
 
-# 🛠️ Regras de Implementação para IAAo gerar código para esta biblioteca, siga estas diretrizes:Buffer de Transferência: Sempre use um buffer estático de pelo menos 1024 bytes nas funções doRetrieve e doStore para evitar picos de memória e lentidão.Watchdog Safety: É obrigatório incluir yield() dentro dos loops de transferência de arquivos para evitar que o ESP32 reinicie por causa do Task Watchdog.Gerenciamento de Pastas: - Use cwdName para rastrear o diretório atual.O comando CWD deve validar se o diretório existe antes de mudar.Os nomes de arquivos na listagem (LIST) devem ser limpos para remover o caminho completo, deixando apenas o nome base.Conexões: O servidor deve ser operado em Modo Passivo (PASV) para maior compatibilidade com firewalls modernos.
+# 🛠️ Regras de Implementação para IAAo gerar código para esta biblioteca,
 
-# 📂 Estrutura de Comandos SuportadosComandoDescriçãoUSER / PASSAutenticação de usuário.PWD / XPWDRetorna o diretório atual.CWD / CDUPNavegação em pastas e subpastas.LIST / NLSTListagem de arquivos compatível com formato UNIX.RETRDownload de arquivos (Otimizado para Vídeos).STORUpload de arquivos (Otimizado para Vídeos).MKDCriação de novos diretórios no SD.
+siga estas diretrizes:Buffer de Transferência: Sempre use um buffer estático de pelo menos 1024 bytes nas funções doRetrieve e doStore para evitar picos de memória e lentidão.Watchdog Safety: É obrigatório incluir yield() dentro dos loops de transferência de arquivos para evitar que o ESP32 reinicie por causa do Task Watchdog.Gerenciamento de Pastas: - Use cwdName para rastrear o diretório atual.O comando CWD deve validar se o diretório existe antes de mudar.Os nomes de arquivos na listagem (LIST) devem ser limpos para remover o caminho completo, deixando apenas o nome base.Conexões: O servidor deve ser operado em Modo Passivo (PASV) para maior compatibilidade com firewalls modernos.
 
-# 🚀 Exemplo de Uso (Sketch Principal)C++#include <WiFi.h>
+# 📂 Estrutura de Comandos SuportadosComandoDescrição
+
+USER / PASSAutenticação de usuário.PWD / XPWDRetorna o diretório atual.CWD / CDUPNavegação em pastas e subpastas.LIST / NLSTListagem de arquivos compatível com formato UNIX.RETRDownload de arquivos (Otimizado para Vídeos).STORUpload de arquivos (Otimizado para Vídeos).MKDCriação de novos diretórios no SD.
+
+# 🚀 Exemplo de Uso (Sketch Principal)C++
+      #include <WiFi.h>
       #include <SD.h>
       #include "ESP32FtpServer.h"
 
