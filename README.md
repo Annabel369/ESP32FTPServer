@@ -58,7 +58,9 @@ MKD                   Criação de novos diretórios no SD.
       // Deve ser chamado constantemente, sem delays no loop
       ftp.handleFTP(); 
     }
-# ⚠️ Restrições TécnicasConexões Simultâneas: Limitar o cliente FTP para 1 conexão por vez.Hardware: Projetado especificamente para o barramento SPI do cartão SD no ESP32.# ESP32FTPServer
+# ⚠️ Restrições Técnicas
+
+Conexões Simultâneas: Limitar o cliente FTP para 1 conexão por vez.Hardware: Projetado especificamente para o barramento SPI do cartão SD no ESP32.# ESP32FTPServer
 Simple FTP Server for Espressif ESP32
 
 
