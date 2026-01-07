@@ -1,36 +1,39 @@
 #include <WiFi.h>
-#include <WiFiClient.h>
+#include <SD.h>
 #include "ESP32FtpServer.h"
 
-const char* ssid = "blablabla..."; //WiFi SSID
-const char* password = "blablabla..."; //WiFi Password
+// Defina seus pinos do SD se não forem os padrão
+#define SD_CS 5
 
-FtpServer ftpSrv;   //set #define FTP_DEBUG in ESP32FtpServer.h to see ftp verbose on serial
+FtpServer ftp;
 
-void setup(void){
+void setup() {
   Serial.begin(115200);
-  WiFi.begin(ssid, password);
-  Serial.println("");
 
-  // Wait for connection
+  // 1. Configuração do WiFi
+  WiFi.begin("SEU_WIFI", "SUA_SENHA");
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
-  Serial.println("");
-  Serial.print("Connected to ");
-  Serial.println(ssid);
-  Serial.print("IP address: ");
+  Serial.println("\nWiFi Conectado!");
+  Serial.print("IP para o Windows: ");
   Serial.println(WiFi.localIP());
 
-  /////FTP Setup, ensure SD is started before ftp;  /////////
-  
-  if (SD.begin()) {
-      Serial.println("SD opened!");
-      ftpSrv.begin("esp32","esp32");    //username, password for ftp.  set ports in ESP32FtpServer.h  (default 21, 50009 for PASV)
-  }    
+  // 2. Desativa economia de energia do WiFi (Melhora velocidade de vídeos)
+  WiFi.setSleep(false);
+
+  // 3. Inicializa o Cartão SD
+  if (!SD.begin(SD_CS)) {
+    Serial.println("Erro ao montar SD!");
+    while(1);
+  }
+
+  // 4. Inicia o FTP (User, Password)
+  ftp.begin("admin", "1234");
 }
 
-void loop(void){
-  ftpSrv.handleFTP();        //make sure in loop you call handleFTP()!!   
+void loop() {
+  // handleFTP retorna 1 se houver cliente ativo
+  ftp.handleFTP();
 }

@@ -80,8 +80,12 @@ int FtpServer::handleFTP() {
 
 void FtpServer::clientConnected() {
   client.println("220 Welcome to ESP32 FTP Server");
+  
+  // SEMPRE QUE CONECTAR, VOLTA PARA A RAIZ:
+  strcpy(cwdName, "/"); 
+  
   cmdStatus = 3; 
-  millisEndConnection = millis() + 10000; 
+  millisEndConnection = millis() + 10000;
 }
 
 boolean FtpServer::userIdentity() {
@@ -119,11 +123,16 @@ boolean FtpServer::processCommand() {
   else if (!strcmp(command, "CWD")) {
     char path[128];
     makePath(path);
+    
+    // Se o caminho ficar vazio ou for apenas "//", corrige para "/"
+    if (strlen(path) == 0) strcpy(path, "/");
+
     File dir = SD.open(path);
     if (dir && dir.isDirectory()) {
       strcpy(cwdName, path);
+      // Garante que o cwdName termine com / para o Windows entender que é pasta
       if (cwdName[strlen(cwdName) - 1] != '/') strcat(cwdName, "/");
-      client.println("250 Directory changed to " + String(cwdName));
+      client.printf("250 CWD successful. Current directory is %s\r\n", cwdName);
     } else {
       client.println("550 Directory not found");
     }
@@ -132,16 +141,18 @@ boolean FtpServer::processCommand() {
   // --- NOVO: Voltar uma pasta (Up Directory) ---
   else if (!strcmp(command, "CDUP")) {
     if (strcmp(cwdName, "/") != 0) {
+      // Remove a barra final se existir para poder buscar a barra anterior
+      int len = strlen(cwdName);
+      if (cwdName[len-1] == '/') cwdName[len-1] = 0;
+      
       char * lastSlash = strrchr(cwdName, '/');
-      if (lastSlash == cwdName) {
-        strcpy(cwdName, "/");
+      if (lastSlash) {
+        *(lastSlash + 1) = 0; // Corta a string na barra anterior
       } else {
-        *lastSlash = 0;
-        lastSlash = strrchr(cwdName, '/');
-        if (lastSlash) *(lastSlash + 1) = 0;
+        strcpy(cwdName, "/");
       }
     }
-    client.println("250 Directory changed to " + String(cwdName));
+    client.printf("250 CDUP successful. Current directory is %s\r\n", cwdName);
   }
   else if (!strcmp(command, "LIST") || !strcmp(command, "NLST")) {
     if (dataConnect()) {
@@ -198,6 +209,10 @@ boolean FtpServer::processCommand() {
   else if (!strcmp(command, "QUIT")) {
     client.println("221 Goodbye");
     client.stop();
+    
+    // RESETAR PARA A RAIZ AQUI:
+    strcpy(cwdName, "/"); 
+    
     cmdStatus = 1;
     return false;
   }

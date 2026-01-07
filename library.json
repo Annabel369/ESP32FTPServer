@@ -1,19 +1,19 @@
 {
-  "name":"ESP32FTPServer",
-  "description":"Simple FTP Server on SD Card for Espressiv ESP32",
-  "keywords":"ftp server, ftserver, sd card",
-  "authors":
-  {
-    "name": "Annabel369",
-    "maintainer": true
-  },
-  "repository":
-  {
+  "name": "ESP32FTPServer",
+  "description": "Simple FTP Server on SD Card for Espressif ESP32. Optimized for large files and subfolders.",
+  "keywords": "ftp, server, sd-card, esp32, storage",
+  "authors": [
+    {
+      "name": "Annabel369",
+      "maintainer": true
+    }
+  ],
+  "repository": {
     "type": "git",
     "url": "https://github.com/Annabel369/ESP32FTPServer"
   },
-  "version": "0.0.4",
+  "version": "0.0.6",
   "license": "LGPL-3.0",
   "frameworks": "arduino",
-  "platforms": ["espressif32"]  
+  "platforms": "espressif32"
 }
