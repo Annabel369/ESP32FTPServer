@@ -32,7 +32,7 @@ IF (CMD == "CWD")
     IF (EXISTS(TARGET) && IS_DIR(TARGET))
         cwdName = TARGET;
         IF (NOT_ENDS_WITH(cwdName, "/")) cwdName += "/";
-        SEND("250 Directory changed");
+        SEND("250 CWD successful");
     ELSE
         SEND("550 Not found");
     ENDIF
@@ -49,7 +49,21 @@ ENDIF
 
 [LOGIC_FLOW: LISTING]
 FORMAT = "drwxr-xr-x 1 owner group %8u Jan 01 2026 %s\r\n";
-OUTPUT = CLEAN_FILENAME(entry.name()); // REMOVE PATH, KEEP NAME ONLY
+// PREVENT DUPLICATES: Get only base filename, strip path prefixes
+OUTPUT = SUBSTRING(entry.name(), LAST_INDEX_OF('/') + 1);
+
+[LOGIC_FLOW: MODIFICATION]
+IF (CMD == "DELE")
+    TARGET = makePath(parameters);
+    IF (EXECUTE(SD.remove(TARGET))) SEND("250 Deleted");
+    ELSE SEND("550 Fail");
+ENDIF
+
+IF (CMD == "STOR")
+    TARGET = makePath(parameters);
+    // OVERWRITE MODE: Use "w" to prevent file corruption/duplication
+    FILE = SD.open(TARGET, "w");
+ENDIF
 
 [ERROR_HANDLING]
 - ON_DISCONNECT: RESET(cwdName = "/");
