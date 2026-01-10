@@ -88,7 +88,8 @@ private:
   char     cmdLine[ FTP_CMD_SIZE ];   // where to store incoming char from client
   char     cwdName[ FTP_CWD_SIZE ];   // name of current directory
   char     command[ 5 ];              // command sent by client
-  boolean  rnfrCmd;                   // previous command was RNFR
+  char     rnfrName[128];             // Para guardar o nome antigo entre um comando e outro
+  bool     rnfrCmd;                   // Para saber que o RNFR foi recebido com sucesso
   char *   parameters;                // point to begin of parameters sent by client
   uint16_t iCL;                       // pointer to cmdLine next incoming char
   int8_t   cmdStatus,                 // status of ftp command connexion

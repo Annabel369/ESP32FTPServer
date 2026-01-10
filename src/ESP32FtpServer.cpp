@@ -157,6 +157,33 @@ boolean FtpServer::processCommand() {
       bytesTransfered = 0;
     } else { client.println("550 File not found"); }
   }
+  // --- PASSO 1: De onde vem o arquivo (RNFR) ---
+  else if (!strcmp(command, "RNFR")) {
+    makePath(rnfrName); // rnfrName deve ser uma variável global char[128] no seu .h
+    if (SD.exists(rnfrName)) {
+      client.println("350 Requested file action pending further information");
+      rnfrCmd = true; // Sinaliza que o próximo comando deve ser RNTO
+    } else {
+      client.println("550 File not found");
+      rnfrCmd = false;
+    }
+  }
+
+  // --- PASSO 2: Para onde vai o arquivo (RNTO) ---
+  else if (!strcmp(command, "RNTO")) {
+    if (rnfrCmd) {
+      char rntoName[128];
+      makePath(rntoName);
+      if (SD.rename(rnfrName, rntoName)) {
+        client.println("250 File renamed");
+      } else {
+        client.println("550 Rename failed");
+      }
+    } else {
+      client.println("503 Bad sequence of commands");
+    }
+    rnfrCmd = false;
+  }
   else if (!strcmp(command, "STOR")) {
     char path[128];
     makePath(path);

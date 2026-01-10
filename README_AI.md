@@ -32,7 +32,7 @@ IF (CMD == "CWD")
     IF (EXISTS(TARGET) && IS_DIR(TARGET))
         cwdName = TARGET;
         IF (NOT_ENDS_WITH(cwdName, "/")) cwdName += "/";
-        SEND("250 CWD successful");
+        SEND("250 Directory changed");
     ELSE
         SEND("550 Not found");
     ENDIF
@@ -47,23 +47,32 @@ IF (CMD == "CDUP")
     SEND("250 CDUP successful");
 ENDIF
 
+[LOGIC_FLOW: RENAME]
+IF (CMD == "RNFR")
+    TARGET = makePath(parameters);
+    IF (EXISTS(TARGET))
+        SAVE_TEMP(rnfrName = TARGET);
+        SET(rnfrCmd = TRUE);
+        SEND("350 Ready for destination");
+    ELSE
+        SEND("550 File not found");
+    ENDIF
+ENDIF
+
+IF (CMD == "RNTO")
+    IF (rnfrCmd == TRUE)
+        NEW_NAME = makePath(parameters);
+        IF (EXECUTE(SD.rename(rnfrName, NEW_NAME))) SEND("250 Renamed");
+        ELSE SEND("550 Failed");
+    ELSE
+        SEND("503 Sequence error");
+    ENDIF
+    SET(rnfrCmd = FALSE);
+ENDIF
+
 [LOGIC_FLOW: LISTING]
 FORMAT = "drwxr-xr-x 1 owner group %8u Jan 01 2026 %s\r\n";
-// PREVENT DUPLICATES: Get only base filename, strip path prefixes
-OUTPUT = SUBSTRING(entry.name(), LAST_INDEX_OF('/') + 1);
-
-[LOGIC_FLOW: MODIFICATION]
-IF (CMD == "DELE")
-    TARGET = makePath(parameters);
-    IF (EXECUTE(SD.remove(TARGET))) SEND("250 Deleted");
-    ELSE SEND("550 Fail");
-ENDIF
-
-IF (CMD == "STOR")
-    TARGET = makePath(parameters);
-    // OVERWRITE MODE: Use "w" to prevent file corruption/duplication
-    FILE = SD.open(TARGET, "w");
-ENDIF
+OUTPUT = CLEAN_FILENAME(entry.name()); // REMOVE PATH, KEEP NAME ONLY
 
 [ERROR_HANDLING]
 - ON_DISCONNECT: RESET(cwdName = "/");
