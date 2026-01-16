@@ -1,7 +1,5 @@
 #include "ESP32FtpServer.h"
 #include <WiFi.h>
-#include <FS.h>
-#include "SD.h"
 
 WiFiServer ftpServer(FTP_CTRL_PORT);
 WiFiServer dataServer(FTP_DATA_PORT_PASV);
@@ -11,16 +9,10 @@ FtpServer::FtpServer() {}
 void FtpServer::begin(String uname, String pword) {
   _FTP_USER = uname;
   _FTP_PASS = pword;
-
-  if (!SD.begin()) {
-    Serial.println("Falha ao montar o SD!");
-  }
-
+  if (!SD.begin()) Serial.println("SD Mount Failed!");
   ftpServer.begin();
   dataServer.begin();
-  
   millisTimeOut = (uint32_t)FTP_TIME_OUT * 60 * 1000;
-  cmdStatus = 0;
   iniVariables();
 }
 
@@ -38,20 +30,17 @@ int FtpServer::handleFTP() {
     client = ftpServer.available();
     clientConnected();
   }
-
   if (cmdStatus > 1 && !client.connected()) {
-    strcpy(cwdName, "/"); // Reset de segurança ao desconectar
+    strcpy(cwdName, "/");
     cmdStatus = 1;
     return 0;
   }
-
   if (readChar() > 0) {
     if (cmdStatus == 3) { if (userIdentity()) cmdStatus = 4; } 
     else if (cmdStatus == 4) { if (userPassword()) cmdStatus = 5; } 
     else if (cmdStatus == 5) { processCommand(); }
     millisEndConnection = millis() + millisTimeOut;
   }
-
   if (transferStatus == 1) { if (!doRetrieve()) transferStatus = 0; }
   else if (transferStatus == 2) { if (!doStore()) transferStatus = 0; }
 
@@ -60,12 +49,11 @@ int FtpServer::handleFTP() {
     client.stop();
     cmdStatus = 1;
   }
-
   return (cmdStatus > 1);
 }
 
 void FtpServer::clientConnected() {
-  client.println("220 Welcome to ESP32 FTP Server");
+  client.println("220 Welcome to ESP32 FTP Server 2026");
   strcpy(cwdName, "/"); 
   cmdStatus = 3; 
   millisEndConnection = millis() + 10000;
@@ -104,9 +92,7 @@ boolean FtpServer::processCommand() {
   }
   else if (!strcmp(command, "CWD")) {
     char path[128];
-    memmove(path);
-    if (strlen(path) == 0) strcpy(path, "/");
-
+    makePath(path);
     File dir = SD.open(path);
     if (dir && dir.isDirectory()) {
       strcpy(cwdName, path);
@@ -135,7 +121,6 @@ boolean FtpServer::processCommand() {
         String name = String(entry.name());
         int lastSlash = name.lastIndexOf('/');
         if (lastSlash != -1) name = name.substring(lastSlash + 1);
-        
         if (entry.isDirectory()) data.printf("drwxr-xr-x 1 owner group %8u Jan 01 2026 %s\r\n", 0, name.c_str());
         else data.printf("-rw-r--r-- 1 owner group %8u Jan 01 2026 %s\r\n", (unsigned)entry.size(), name.c_str());
         entry.close();
@@ -148,7 +133,7 @@ boolean FtpServer::processCommand() {
   }
   else if (!strcmp(command, "RETR")) {
     char path[128];
-    memmove(path);
+    makePath(path);
     file = SD.open(path, "r");
     if (file && !file.isDirectory() && dataConnect()) {
       client.printf("150 %u bytes to download\r\n", (unsigned)file.size());
@@ -157,37 +142,26 @@ boolean FtpServer::processCommand() {
       bytesTransfered = 0;
     } else { client.println("550 File not found"); }
   }
-  // --- PASSO 1: De onde vem o arquivo (RNFR) ---
   else if (!strcmp(command, "RNFR")) {
-    memmove(rnfrName); // rnfrName deve ser uma variável global char[128] no seu .h
+    makePath(rnfrName);
     if (SD.exists(rnfrName)) {
-      client.println("350 Requested file action pending further information");
-      rnfrCmd = true; // Sinaliza que o próximo comando deve ser RNTO
-    } else {
-      client.println("550 File not found");
-      rnfrCmd = false;
-    }
+      client.println("350 Pending further information");
+      rnfrCmd = true;
+    } else { client.println("550 File not found"); rnfrCmd = false; }
   }
-
-  // --- PASSO 2: Para onde vai o arquivo (RNTO) ---
   else if (!strcmp(command, "RNTO")) {
     if (rnfrCmd) {
       char rntoName[128];
-      memmove(rntoName);
-      if (SD.rename(rnfrName, rntoName)) {
-        client.println("250 File renamed");
-      } else {
-        client.println("550 Rename failed");
-      }
-    } else {
-      client.println("503 Bad sequence of commands");
-    }
+      makePath(rntoName);
+      if (SD.rename(rnfrName, rntoName)) client.println("250 File renamed");
+      else client.println("550 Rename failed");
+    } else { client.println("503 Bad sequence"); }
     rnfrCmd = false;
   }
   else if (!strcmp(command, "STOR")) {
     char path[128];
-    memmove(path);
-    file = SD.open(path, "w"); // "w" sobrescreve e resolve duplicatas ao salvar
+    makePath(path);
+    file = SD.open(path, "w");
     if (file && dataConnect()) {
       client.println("150 Ok to send");
       transferStatus = 2;
@@ -195,22 +169,21 @@ boolean FtpServer::processCommand() {
       bytesTransfered = 0;
     } else { client.println("451 Error"); }
   }
-  else if (!strcmp(command, "DELE")) { // NOVO: Deletar arquivos
+  else if (!strcmp(command, "DELE")) {
     char path[128];
-    memmove(path);
+    makePath(path);
     if (SD.remove(path)) client.println("250 File deleted");
     else client.println("550 Delete failed");
   }
   else if (!strcmp(command, "MKD")) {
     char path[128];
-    memmove(path);
+    makePath(path);
     if (SD.mkdir(path)) client.printf("257 \"%s\" created\r\n", parameters);
     else client.println("550 Create directory failed");
   }
   else if (!strcmp(command, "QUIT")) {
     client.println("221 Goodbye");
     client.stop();
-    strcpy(cwdName, "/"); 
     cmdStatus = 1;
     return false;
   }
@@ -253,9 +226,8 @@ boolean FtpServer::doStore() {
 void FtpServer::closeTransfer() {
   uint32_t deltaT = millis() - millisBeginTrans;
   if (deltaT > 0 && bytesTransfered > 0) {
-    client.printf("226-File successfully transferred\r\n");
     client.printf("226 %u ms, %.2f kbytes/s\r\n", deltaT, (float)bytesTransfered / deltaT);
-  } else { client.println("226 File successfully transferred"); }
+  } else { client.println("226 Success"); }
   if (file) file.close();
   data.stop();
   transferStatus = 0;
@@ -276,7 +248,7 @@ int8_t FtpServer::readChar() {
   char c = client.read();
   if (c == '\r') return 0;
   if (c != '\n') {
-    if (iCL < FTP_CMD_SIZE) cmdLine[iCL++] = c;
+    if (iCL < FTP_CMD_SIZE - 1) cmdLine[iCL++] = c;
     return 0;
   }
   cmdLine[iCL] = 0;
@@ -288,23 +260,23 @@ int8_t FtpServer::readChar() {
   return 1;
 }
 
-boolean FtpServer::memmove(char *fullName) {
+boolean FtpServer::makePath(char *fullName) {
+  memset(fullName, 0, 128);
   if (parameters == NULL || strlen(parameters) == 0 || strcmp(parameters, "/") == 0) {
     strcpy(fullName, "/");
     return true;
   }
-  if (parameters[0] == '/') strcpy(fullName, parameters);
+  if (parameters[0] == '/') strncpy(fullName, parameters, 127);
   else {
-    strcpy(fullName, cwdName);
-    if (fullName[strlen(fullName) - 1] != '/') strcat(fullName, "/");
-    strcat(fullName, parameters);
+    strncpy(fullName, cwdName, 127);
+    if (fullName[strlen(fullName) - 1] != '/') strncat(fullName, "/", 127 - strlen(fullName));
+    strncat(fullName, parameters, 127 - strlen(fullName));
   }
   char *doubleSlash;
   while ((doubleSlash = strstr(fullName, "//")) != NULL) {
-    memmove(doubleSlash, doubleSlash + 1, strlen(doubleSlash));
+    ::memmove(doubleSlash, doubleSlash + 1, strlen(doubleSlash));
   }
   return true;
 }
 
 void FtpServer::disconnectClient() { client.stop(); cmdStatus = 1; }
-void FtpServer::abortTransfer() { if (transferStatus > 0) { file.close(); data.stop(); } transferStatus = 0; }
