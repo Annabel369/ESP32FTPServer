@@ -11,7 +11,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "github.com"
+    "url": "https://github.com/Annabel369/ESP32FTPServer.git"
   },
   "version": "1.0.3",
   "license": "LGPL-3.0",
