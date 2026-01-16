@@ -104,7 +104,7 @@ boolean FtpServer::processCommand() {
   }
   else if (!strcmp(command, "CWD")) {
     char path[128];
-    makePath(path);
+    memmove(path);
     if (strlen(path) == 0) strcpy(path, "/");
 
     File dir = SD.open(path);
@@ -148,7 +148,7 @@ boolean FtpServer::processCommand() {
   }
   else if (!strcmp(command, "RETR")) {
     char path[128];
-    makePath(path);
+    memmove(path);
     file = SD.open(path, "r");
     if (file && !file.isDirectory() && dataConnect()) {
       client.printf("150 %u bytes to download\r\n", (unsigned)file.size());
@@ -159,7 +159,7 @@ boolean FtpServer::processCommand() {
   }
   // --- PASSO 1: De onde vem o arquivo (RNFR) ---
   else if (!strcmp(command, "RNFR")) {
-    makePath(rnfrName); // rnfrName deve ser uma variável global char[128] no seu .h
+    memmove(rnfrName); // rnfrName deve ser uma variável global char[128] no seu .h
     if (SD.exists(rnfrName)) {
       client.println("350 Requested file action pending further information");
       rnfrCmd = true; // Sinaliza que o próximo comando deve ser RNTO
@@ -173,7 +173,7 @@ boolean FtpServer::processCommand() {
   else if (!strcmp(command, "RNTO")) {
     if (rnfrCmd) {
       char rntoName[128];
-      makePath(rntoName);
+      memmove(rntoName);
       if (SD.rename(rnfrName, rntoName)) {
         client.println("250 File renamed");
       } else {
@@ -186,7 +186,7 @@ boolean FtpServer::processCommand() {
   }
   else if (!strcmp(command, "STOR")) {
     char path[128];
-    makePath(path);
+    memmove(path);
     file = SD.open(path, "w"); // "w" sobrescreve e resolve duplicatas ao salvar
     if (file && dataConnect()) {
       client.println("150 Ok to send");
@@ -197,13 +197,13 @@ boolean FtpServer::processCommand() {
   }
   else if (!strcmp(command, "DELE")) { // NOVO: Deletar arquivos
     char path[128];
-    makePath(path);
+    memmove(path);
     if (SD.remove(path)) client.println("250 File deleted");
     else client.println("550 Delete failed");
   }
   else if (!strcmp(command, "MKD")) {
     char path[128];
-    makePath(path);
+    memmove(path);
     if (SD.mkdir(path)) client.printf("257 \"%s\" created\r\n", parameters);
     else client.println("550 Create directory failed");
   }
@@ -288,7 +288,7 @@ int8_t FtpServer::readChar() {
   return 1;
 }
 
-boolean FtpServer::makePath(char *fullName) {
+boolean FtpServer::memmove(char *fullName) {
   if (parameters == NULL || strlen(parameters) == 0 || strcmp(parameters, "/") == 0) {
     strcpy(fullName, "/");
     return true;
