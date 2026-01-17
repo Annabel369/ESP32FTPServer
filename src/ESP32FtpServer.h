@@ -1,14 +1,15 @@
 #ifndef FTP_SERVERESP_H
 #define FTP_SERVERESP_H
 
-#include "SD.h"
+#include <SD.h>
 #include <FS.h>
-#include <WiFiClient.h>
+#include <WiFi.h>
+#include <WiFiClientSecure.h>
 
 #define FTP_CTRL_PORT      21  
 #define FTP_DATA_PORT_PASV 50009 
 #define FTP_TIME_OUT       5    
-#define FTP_CMD_SIZE       350 // Buffer grande para evitar crash em comandos longos
+#define FTP_CMD_SIZE       350 
 #define FTP_CWD_SIZE       350 
 #define FTP_BUF_SIZE       1024 
 
@@ -29,12 +30,12 @@ private:
   boolean doRetrieve();
   boolean doStore();
   void closeTransfer();
-  void abortTransfer();
   boolean makePath(char *fullName); 
   int8_t readChar();
+  void checkCertFolder(); // Nova função de gestão do SD
 
   IPAddress dataIp;
-  WiFiClient client;
+  WiFiClient *clientPtr = nullptr; 
   WiFiClient data;
   File file;
 
@@ -42,13 +43,13 @@ private:
   char cmdLine[FTP_CMD_SIZE];
   char cwdName[FTP_CWD_SIZE];
   char command[6];
-  char rnfrName[300]; // Buffer para o arquivo original do Rename
+  char rnfrName[300];
   bool rnfrCmd;       
   char *parameters;
   uint16_t iCL;
   int8_t cmdStatus, transferStatus;
-  uint32_t millisTimeOut, millisEndConnection, millisBeginTrans, bytesTransfered;
+  uint32_t millisTimeOut, millisEndConnection, bytesTransfered;
   String _FTP_USER, _FTP_PASS;
+  bool isSecure = false; 
 };
-
 #endif

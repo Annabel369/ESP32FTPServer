@@ -1,16 +1,27 @@
-# ESP32FTPServer
-ESP32 FTP Server (Optimized 2026)
+ESP32FTPServer (Secure Edition 2026)
 
-Simple and robust FTP Server for Espressif ESP32 using SD Card storage. This version is specifically optimized for handling large files and stable navigation.
-🚀 Key Features (Version 1.0.6)
+Version 1.0.8 - Professional FTP Server for Espressif ESP32 with Explicit TLS/SSL support and SD Card storage.
 
-    Subfolder Stability: Fixed CWD and CDUP logic for reliable navigation through nested directories in FileZilla and Windows Explorer.
+This version is the result of months of optimization, specifically designed to handle the ESP32 Core 3.3.5+ architecture, providing high security and rock-solid stability for personal use and IoT projects.
+📝 What's New in Version 1.0.8?
 
-    Large File Optimization: Implemented 1024-byte static buffering, making it stable for transferring MP4, ZIP, and binary files.
+Compared to version 1.0.7, this release introduces professional-grade security and networking fixes:
 
-    File Management: Full support for RNFR/RNTO (Rename) and DELE (Delete) commands.
+    FTP over TLS (Explicit SSL): Full support for the AUTH TLS command. Secure your transfers using professional certificates.
 
-    High Performance: Includes recommendations to disable WiFi Power Save mode for maximum transfer speeds.
+    Core 3.x Compatibility: Fully rewritten to support the new NetworkClient architecture of ESP32 Core 3.3.5+.
+
+    Automatic SD Certificate Management: * The server automatically creates a /cert folder on the SD card.
+
+        It deploys a default 10-year public certificate (signed via YubiKey) if no keys are found.
+
+        Hot-Swapping: Update your certificates by simply replacing the files on the SD card—no recompilation needed.
+
+    Anti-Timeout Logic (Error 128 Fix): Implementation of setNoDelay(true) and optimized socket timeouts to sync perfectly with FileZilla’s GnuTLS engine.
+
+    Dynamic Memory Management: Removed heavy static buffers. Uses "Dynamic Record Sizing" for TLS, leaving over 270KB of RAM free for your application.
+
+    Subfolder Navigation Fix: Improved LIST command with specific yield() and flush() logic to allow "Going Back" through directories without dropping the SSL session.
 
 🛠 Installation
 
@@ -18,14 +29,17 @@ Simple and robust FTP Server for Espressif ESP32 using SD Card storage. This ver
 
     Go to Sketch -> Include Library -> Manage Libraries...
 
-    Search for ESP32FtpServer and install version 1.0.6.
+    Search for ESP32FtpServer and install version 1.0.8.
 
-💻 Quick Start
+    Note: Ensure you are using ESP32 Board Manager version 3.0.0 or higher.
+
+💻 Quick Start (Secure Mode)
 C++
 
 #include <WiFi.h>
 #include <SD.h>
 #include <ESP32FtpServer.h>
+#include "ESP32FtpServerCert.h" // Your YubiKey Signed Certificates
 
 #define SD_CS 5
 FtpServer ftp;
@@ -36,57 +50,46 @@ void setup() {
   WiFi.begin("YOUR_SSID", "YOUR_PASSWORD");
   while (WiFi.status() != WL_CONNECTED) delay(500);
 
-  // Optimization for speed
+  // Optimization for Network Performance
   WiFi.setSleep(false);
 
   if (SD.begin(SD_CS)) {
-    ftp.begin("admin", "1234"); // User, Password
+    // The server will automatically create /cert/cert.crt and /cert/key.key on SD
+    ftp.begin("admin", "secure123"); 
+    Serial.println("FTP Server Ready with TLS Support");
   }
 }
 
 void loop() {
-  ftp.handleFTP(); // Must be called in the loop
+  ftp.handleFTP(); // Must be called frequently
 }
 
-📂 Project Structure
+📂 SD Card Folder Structure
 
+Upon the first run, the library generates the following structure for security:
+
+    /cert/cert.crt — Public Certificate (PEM format).
+
+    /cert/key.key — Private Key (PEM format).
+
+    Pro Tip: To use your own domain certificate, simply overwrite these files on the SD card.
+
+⚙️ Recommended FileZilla Settings
+
+To ensure 100% stability with the ESP32 hardware:
+
+    Encryption: Use "Require explicit FTP over TLS".
+
+    Timeout: Set to 60 seconds or 0 (Infinite).
+
+    Transfer Settings: Limit the "Maximum number of simultaneous connections" to 1.
+
+⚖️ License & Credits
+
+Licensed under the LGPL-3.0 License.
+
+Maintained by: Amauri Bueno dos Santos (2026). Based on original works by MollySophia and robo8080.
 For the library to be recognized by the Arduino Registry, it follows this structure:
-
-    examples/ESP32FTPServerExample/ESP32FTPServerExample.ino
-
-    src/ESP32FtpServer.h & src/ESP32FtpServer.cpp
-
-    library.properties
-
-    LICENSE (LGPL-3.0)
-
-⚖️ License
-
-📝 Release Notes v1.0.7 - Stable Edition (2026)
-
-Melhorias e Correções:
-
-    Proteção Anti-Crash: Implementada verificação de caracteres ilegais (:, *, ?). O servidor agora recusa arquivos inválidos em vez de reiniciar o ESP32.
-
-    Buffer de Caminho (Path): Aumentado de 128 para 300 bytes, permitindo lidar com nomes de arquivos extremamente longos (ex: vídeos do YouTube ou Screenshots) sem corromper a memória.
-
-    Estabilidade de Rede: Adicionado yield() no loop de listagem de arquivos e um pequeno delay no fechamento do soquete de dados para evitar desconexões prematuras no FileZilla.
-
-    Rename Robusto: Correção na lógica RNFR/RNTO para garantir que a flag de renomeação seja resetada corretamente após cada tentativa.
-
-    Velocidade: Mantido o buffer de 1024 bytes para alta performance em arquivos MP4 e ZIP.
-
-Como testar a estabilidade agora:
-
-    Tente enviar um arquivo com nome curto (ex: teste.txt) -> Deve funcionar 100%.
-
-    Tente enviar o arquivo da Ferrari (nome longo) -> Deve funcionar 100% (desde que não tenha caracteres proibidos).
-
-    Tente enviar um arquivo com : -> O servidor vai dar o erro 553 mas não vai cair, permitindo que você continue trabalhando.
-
-This library is licensed under the LGPL-3.0 License.
-<img width="838" height="420" alt="image" src="https://github.com/user-attachments/assets/a4fdc501-041e-48ae-b1a4-5d2304619fc6" />
-Simple FTP Server for Espressif ESP32
-Based on the work from https://github.com/MollySophia/ESP32_FTPServer_SD (which again is based on https://github.com/robo8080/ESP32_FTPServer_SD) 
+https://github.com/MollySophia/ESP32_FTPServer_SD (which again is based on https://github.com/robo8080/ESP32_FTPServer_SD) 
 
 Modified to better support subdirectories
