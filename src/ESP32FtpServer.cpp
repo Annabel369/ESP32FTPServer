@@ -8,9 +8,11 @@ FtpServer::FtpServer() {
   clientPtr = nullptr;
 }
 
-void FtpServer::begin(String uname, String pword) {
-  _FTP_USER = uname; 
-  _FTP_PASS = pword;
+void FtpServer::begin(const char* uname, const char* pword) {
+  strncpy(_FTP_USER, uname, sizeof(_FTP_USER) - 1);
+  _FTP_USER[sizeof(_FTP_USER) - 1] = 0;
+  strncpy(_FTP_PASS, pword, sizeof(_FTP_PASS) - 1);
+  _FTP_PASS[sizeof(_FTP_PASS) - 1] = 0;
   if (!SD.begin()) {
     Serial.println("Erro SD!");
   } else {
@@ -47,26 +49,38 @@ void FtpServer::iniVariables() {
 
 int FtpServer::handleFTP() {
   if (ftpServer.hasClient()) {
-  if (clientPtr) { 
-    clientPtr->stop(); 
-    delete clientPtr; 
-    clientPtr = nullptr;
-  }
-  WiFiClient tempClient = ftpServer.available();
-  if (tempClient) { // Verifica se o cliente é válido antes do 'new'
-    clientPtr = new (std::nothrow) WiFiClient(tempClient); 
-    if (clientPtr) {
-      clientPtr->setNoDelay(true);
-      cmdStatus = 3; 
-      transferStatus = 0;
-      iCL = 0;
-      clientConnected();
+    WiFiClient tempClient = ftpServer.available();
+    
+    // Se já existe um cliente conectado, rejeita o novo para não derrubar a sessão atual
+    if (clientPtr && clientPtr->connected()) {
+      tempClient.println("421 Service not available, server busy.");
+      tempClient.flush(); // Garante que o erro chegue ao cliente antes de fechar
+      tempClient.stop();
+    } else {
+      // Se não há cliente ou o anterior caiu, aceita o novo
+      if (clientPtr) { 
+        clientPtr->stop(); 
+        delete clientPtr; 
+        clientPtr = nullptr;
+      }
+      
+      if (tempClient) { 
+        clientPtr = new (std::nothrow) WiFiClient(tempClient); 
+        if (clientPtr) {
+          clientPtr->setNoDelay(true);
+          cmdStatus = 3; 
+          transferStatus = 0;
+          iCL = 0;
+          clientConnected();
+        }
+      }
     }
-  }
   }
 
   // Se o cliente desconectar sozinho
   if (cmdStatus > 1 && (clientPtr == nullptr || !clientPtr->connected())) {
+    if (file) file.close(); // Garante fechamento do arquivo em desconexão abrupta
+    data.stop();            // Garante liberação do socket de dados
     iniVariables();
     cmdStatus = 1; 
     return 0;
@@ -81,12 +95,25 @@ int FtpServer::handleFTP() {
     }
   }
 
-  if (transferStatus == 1) { if (!doRetrieve()) transferStatus = 0; }
-  else if (transferStatus == 2) { if (!doStore()) transferStatus = 0; }
+  if (transferStatus == 1) { 
+    if (!doRetrieve()) transferStatus = 0;
+    else millisEndConnection = millis() + millisTimeOut;
+  }
+  else if (transferStatus == 2) { 
+    if (!doStore()) transferStatus = 0;
+    else millisEndConnection = millis() + millisTimeOut;
+  }
   
   if (cmdStatus > 2 && millis() > millisEndConnection) {
-    if(clientPtr) { clientPtr->println("530 Timeout."); clientPtr->stop(); }
-    cmdStatus = 1;
+    if(clientPtr) { 
+      clientPtr->println("530 Timeout."); 
+      clientPtr->stop(); 
+      delete clientPtr; 
+      clientPtr = nullptr;
+    }
+    if (file) file.close();
+    data.stop();
+    iniVariables();
   }
   return (cmdStatus > 1);
 }
@@ -102,7 +129,7 @@ void FtpServer::clientConnected() {
 
 boolean FtpServer::userIdentity() {
   if (strcmp(command, "USER") == 0) {
-    if (_FTP_USER.equals(parameters)) { 
+    if (strcmp(_FTP_USER, parameters) == 0) { 
       clientPtr->println("331 Password required"); 
       return true; 
     }
@@ -113,7 +140,7 @@ boolean FtpServer::userIdentity() {
 
 boolean FtpServer::userPassword() {
   if (strcmp(command, "PASS") == 0) {
-    if (_FTP_PASS.equals(parameters)) { 
+    if (strcmp(_FTP_PASS, parameters) == 0) { 
       clientPtr->println("230 Logged in."); 
       return true; 
     }
@@ -126,20 +153,25 @@ boolean FtpServer::processCommand() {
   char path[350]; 
 
   if (!strcmp(command, "AUTH") && parameters != NULL && !strcmp(parameters, "TLS")) {
-    clientPtr->println("234 Proceed with negotiation");
-    clientPtr->flush();
-    
-    WiFiClientSecure *sClient = new WiFiClientSecure();
-    sClient->setCertificate(server_crt);
-    sClient->setPrivateKey(server_key);
+    WiFiClientSecure *sClient = new (std::nothrow) WiFiClientSecure();
+    if (sClient) {
+      clientPtr->println("234 Proceed with negotiation");
+      clientPtr->flush();
+      
+      sClient->setCertificate(server_crt);
+      sClient->setPrivateKey(server_key);
 
-    WiFiClient *oldClient = clientPtr;
-    clientPtr = sClient;
-    delete oldClient;
-    
-    isSecure = true;
-    Serial.println(">>> TLS Ativado na 1.0.8");
-    return true;
+      WiFiClient *oldClient = clientPtr;
+      clientPtr = sClient;
+      delete oldClient;
+      
+      isSecure = true;
+      Serial.println(">>> TLS Ativado na 1.0.8");
+      return true;
+    } else {
+      clientPtr->println("451 Action aborted: server memory error");
+      return true;
+    }
   }
 
   if (!strcmp(command, "FEAT")) {
@@ -180,15 +212,15 @@ boolean FtpServer::processCommand() {
       if (root && root.isDirectory()) {
         File entry;
         while (entry = root.openNextFile()) {
-          String name = String(entry.name());
-          int lastSlash = name.lastIndexOf('/');
-          if (lastSlash != -1) name = name.substring(lastSlash + 1);
+          const char* name = entry.name();
+          const char* p = strrchr(name, '/');
+          if (p) name = p + 1;
 
           if (entry.isDirectory()) {
             // O 'd' no início é vital para o Dolphin não tentar entrar em arquivos
-            data.printf("d--x--x--x 1 owner group 0 Jan 01 1970 %s\r\n", name.c_str());
+            data.printf("d--x--x--x 1 owner group 0 Jan 01 1970 %s\r\n", name);
           } else {
-            data.printf("-rw-rw-rw- 1 owner group %u Jan 01 1970 %s\r\n", (unsigned)entry.size(), name.c_str());
+            data.printf("-rw-rw-rw- 1 owner group %u Jan 01 1970 %s\r\n", (unsigned)entry.size(), name);
           }
           data.flush();
           entry.close();
@@ -206,7 +238,10 @@ boolean FtpServer::processCommand() {
       if (file && !file.isDirectory() && dataConnect()) {
         clientPtr->printf("150 %u bytes\r\n", (unsigned)file.size());
         transferStatus = 1;
-      } else { clientPtr->println("550 File not found"); }
+      } else { 
+        clientPtr->println("550 File not found"); 
+        if (file) file.close(); // Correção: Fecha o arquivo se a conexão de dados falhar
+      }
     }
   }
   else if (!strcmp(command, "STOR")) {
@@ -230,7 +265,7 @@ boolean FtpServer::processCommand() {
 
 boolean FtpServer::doRetrieve() {
   if (file && file.available()) {
-    static uint8_t buf[1024]; 
+    static uint8_t buf[FTP_BUF_SIZE]; 
     int nb = file.read(buf, sizeof(buf));
     if (nb > 0) {
         // Removido o flush() para evitar gargalo no TLS
@@ -250,7 +285,7 @@ boolean FtpServer::doRetrieve() {
 
 boolean FtpServer::doStore() {
   if (data.connected() && data.available()) {
-    static uint8_t buf[1024];
+    static uint8_t buf[FTP_BUF_SIZE];
     int nb = data.read(buf, sizeof(buf));
     if (nb > 0) file.write(buf, nb);
     yield(); 
@@ -326,4 +361,3 @@ void FtpServer::disconnectClient() {
   if(clientPtr) { clientPtr->stop(); delete clientPtr; clientPtr = nullptr; }
   cmdStatus = 1; 
 }
-
