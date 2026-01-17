@@ -62,6 +62,28 @@ For the library to be recognized by the Arduino Registry, it follows this struct
 
 ⚖️ License
 
+📝 Release Notes v1.0.7 - Stable Edition (2026)
+
+Melhorias e Correções:
+
+    Proteção Anti-Crash: Implementada verificação de caracteres ilegais (:, *, ?). O servidor agora recusa arquivos inválidos em vez de reiniciar o ESP32.
+
+    Buffer de Caminho (Path): Aumentado de 128 para 300 bytes, permitindo lidar com nomes de arquivos extremamente longos (ex: vídeos do YouTube ou Screenshots) sem corromper a memória.
+
+    Estabilidade de Rede: Adicionado yield() no loop de listagem de arquivos e um pequeno delay no fechamento do soquete de dados para evitar desconexões prematuras no FileZilla.
+
+    Rename Robusto: Correção na lógica RNFR/RNTO para garantir que a flag de renomeação seja resetada corretamente após cada tentativa.
+
+    Velocidade: Mantido o buffer de 1024 bytes para alta performance em arquivos MP4 e ZIP.
+
+Como testar a estabilidade agora:
+
+    Tente enviar um arquivo com nome curto (ex: teste.txt) -> Deve funcionar 100%.
+
+    Tente enviar o arquivo da Ferrari (nome longo) -> Deve funcionar 100% (desde que não tenha caracteres proibidos).
+
+    Tente enviar um arquivo com : -> O servidor vai dar o erro 553 mas não vai cair, permitindo que você continue trabalhando.
+
 This library is licensed under the LGPL-3.0 License.
 <img width="838" height="420" alt="image" src="https://github.com/user-attachments/assets/a4fdc501-041e-48ae-b1a4-5d2304619fc6" />
 Simple FTP Server for Espressif ESP32

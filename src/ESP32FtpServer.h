@@ -1,9 +1,3 @@
-/*
- * FTP SERVER FOR ESP32 (Optimized Version 1.0.7)
- * Based on the work of: Jean-Michel Gallego, David Paiva, @robo8080.
- * Modified and Enhanced by: Amauri Bueno (Annabel369) - 2026
- */
-
 #ifndef FTP_SERVERESP_H
 #define FTP_SERVERESP_H
 
@@ -14,8 +8,8 @@
 #define FTP_CTRL_PORT      21  
 #define FTP_DATA_PORT_PASV 50009 
 #define FTP_TIME_OUT       5    
-#define FTP_CMD_SIZE       263
-#define FTP_CWD_SIZE       263
+#define FTP_CMD_SIZE       350 // Buffer grande para evitar crash em comandos longos
+#define FTP_CWD_SIZE       350 
 #define FTP_BUF_SIZE       1024 
 
 class FtpServer {
@@ -36,7 +30,7 @@ private:
   boolean doStore();
   void closeTransfer();
   void abortTransfer();
-  boolean makePath(char *fullName);
+  boolean makePath(char *fullName); 
   int8_t readChar();
 
   IPAddress dataIp;
@@ -47,15 +41,14 @@ private:
   uint16_t dataPort;
   char cmdLine[FTP_CMD_SIZE];
   char cwdName[FTP_CWD_SIZE];
-  char command[5];
-  char rnfrName[128]; // Para Rename
-  bool rnfrCmd;       // Flag Rename
+  char command[6];
+  char rnfrName[300]; // Buffer para o arquivo original do Rename
+  bool rnfrCmd;       
   char *parameters;
   uint16_t iCL;
   int8_t cmdStatus, transferStatus;
   uint32_t millisTimeOut, millisEndConnection, millisBeginTrans, bytesTransfered;
-  String _FTP_USER;
-  String _FTP_PASS;
+  String _FTP_USER, _FTP_PASS;
 };
 
 #endif
