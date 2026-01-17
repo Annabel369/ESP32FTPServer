@@ -13,11 +13,7 @@ void FtpServer::begin(const char* uname, const char* pword) {
   _FTP_USER[sizeof(_FTP_USER) - 1] = 0;
   strncpy(_FTP_PASS, pword, sizeof(_FTP_PASS) - 1);
   _FTP_PASS[sizeof(_FTP_PASS) - 1] = 0;
-  if (!SD.begin()) {
-    Serial.println("Erro SD!");
-  } else {
-    checkCertFolder();
-  }
+  checkCertFolder();
   ftpServer.begin();
   dataServer.begin();
   millisTimeOut = (uint32_t)FTP_TIME_OUT * 60 * 1000;
@@ -51,28 +47,26 @@ int FtpServer::handleFTP() {
   if (ftpServer.hasClient()) {
     WiFiClient tempClient = ftpServer.available();
     
-    // Se já existe um cliente conectado, rejeita o novo para não derrubar a sessão atual
-    if (clientPtr && clientPtr->connected()) {
-      tempClient.println("421 Service not available, server busy.");
-      tempClient.flush(); // Garante que o erro chegue ao cliente antes de fechar
-      tempClient.stop();
-    } else {
-      // Se não há cliente ou o anterior caiu, aceita o novo
-      if (clientPtr) { 
-        clientPtr->stop(); 
-        delete clientPtr; 
-        clientPtr = nullptr;
-      }
-      
-      if (tempClient) { 
-        clientPtr = new (std::nothrow) WiFiClient(tempClient); 
-        if (clientPtr) {
-          clientPtr->setNoDelay(true);
-          cmdStatus = 3; 
-          transferStatus = 0;
-          iCL = 0;
-          clientConnected();
-        }
+    // Anti-Lockout: Se chegar uma nova conexão, derruba a anterior.
+    // Isso resolve o erro 421 em loops de reconexão ou sockets zumbis.
+    if (clientPtr) { 
+      clientPtr->stop(); 
+      delete clientPtr; 
+      clientPtr = nullptr;
+      // Limpa recursos da sessão anterior para evitar conflitos
+      if (file) file.close();
+      data.stop();
+      iniVariables();
+    }
+    
+    if (tempClient) { 
+      clientPtr = new (std::nothrow) WiFiClient(tempClient); 
+      if (clientPtr) {
+        clientPtr->setNoDelay(true);
+        cmdStatus = 3; 
+        transferStatus = 0;
+        iCL = 0;
+        clientConnected();
       }
     }
   }
@@ -252,6 +246,40 @@ boolean FtpServer::processCommand() {
         transferStatus = 2;
       } else { clientPtr->println("451 SD Error"); if(file) file.close(); }
     }
+  }
+  else if (!strcmp(command, "DELE")) {
+    if (makePath(path)) {
+      if (SD.remove(path)) clientPtr->println("250 DELE successful");
+      else clientPtr->println("550 DELE failed");
+    }
+  }
+  else if (!strcmp(command, "RMD") || !strcmp(command, "XRMD")) {
+    if (makePath(path)) {
+      if (SD.rmdir(path)) clientPtr->println("250 RMD successful");
+      else clientPtr->println("550 RMD failed");
+    }
+  }
+  else if (!strcmp(command, "MKD") || !strcmp(command, "XMKD")) {
+    if (makePath(path)) {
+      if (SD.mkdir(path)) clientPtr->println("257 MKD successful");
+      else clientPtr->println("550 MKD failed");
+    }
+  }
+  else if (!strcmp(command, "RNFR")) {
+    if (makePath(path)) {
+      if (SD.exists(path)) {
+        strncpy(rnfrName, path, sizeof(rnfrName) - 1);
+        rnfrCmd = true;
+        clientPtr->println("350 Ready for destination");
+      } else { clientPtr->println("550 File not found"); }
+    }
+  }
+  else if (!strcmp(command, "RNTO")) {
+    if (rnfrCmd && makePath(path)) {
+      if (SD.rename(rnfrName, path)) clientPtr->println("250 Renamed");
+      else clientPtr->println("550 Rename failed");
+    } else { clientPtr->println("503 Bad sequence"); }
+    rnfrCmd = false;
   }
   else if (!strcmp(command, "QUIT")) {
     clientPtr->println("221 Goodbye"); 
