@@ -47,20 +47,22 @@ void FtpServer::iniVariables() {
 
 int FtpServer::handleFTP() {
   if (ftpServer.hasClient()) {
-    // Se houver cliente antigo, mata sem dó nem aviso 421
-    if (clientPtr) { 
-      clientPtr->stop(); 
-      delete clientPtr; 
-      clientPtr = nullptr;
+  if (clientPtr) { 
+    clientPtr->stop(); 
+    delete clientPtr; 
+    clientPtr = nullptr;
+  }
+  WiFiClient tempClient = ftpServer.available();
+  if (tempClient) { // Verifica se o cliente é válido antes do 'new'
+    clientPtr = new (std::nothrow) WiFiClient(tempClient); 
+    if (clientPtr) {
+      clientPtr->setNoDelay(true);
+      cmdStatus = 3; 
+      transferStatus = 0;
+      iCL = 0;
+      clientConnected();
     }
-    clientPtr = new WiFiClient(ftpServer.available());
-    clientPtr->setNoDelay(true);
-    
-    // RESETA O ESTADO para o novo cliente conseguir logar do zero
-    cmdStatus = 3; 
-    transferStatus = 0;
-    iCL = 0;
-    clientConnected();
+  }
   }
 
   // Se o cliente desconectar sozinho
@@ -228,12 +230,17 @@ boolean FtpServer::processCommand() {
 
 boolean FtpServer::doRetrieve() {
   if (file && file.available()) {
-    static uint8_t buf[1024]; // Buffer fixo para evitar erro 104
+    static uint8_t buf[1024]; 
     int nb = file.read(buf, sizeof(buf));
     if (nb > 0) {
-        data.write(buf, nb);
-        data.flush(); // Crucial para estabilidade TLS
+        // Removido o flush() para evitar gargalo no TLS
+        int written = data.write(buf, nb);
+        if (written < nb) {
+            // Se não conseguiu escrever tudo, retrocede o ponteiro do arquivo
+            file.seek(file.position() - (nb - written));
+        }
     }
+    // yield() é essencial, mas o delay(0) ajuda o agendador do FreeRTOS
     yield(); 
     return true;
   }
