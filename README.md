@@ -93,3 +93,4 @@ For the library to be recognized by the Arduino Registry, it follows this struct
 https://github.com/MollySophia/ESP32_FTPServer_SD (which again is based on https://github.com/robo8080/ESP32_FTPServer_SD) 
 
 Modified to better support subdirectories
+## Status: Versão 1.0.8 Estável (2026) - Assinada com YubiKey
