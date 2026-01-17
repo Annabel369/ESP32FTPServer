@@ -5,7 +5,7 @@
   "keywords": "ftp, server, sd-card, esp32, storage",
   "authors": [
     {
-      "name": "Annabel369",
+      "name": "Amauri Bueno (Annabel369)",
       "email": "amauri00007@gmail.com",
       "maintainer": true
     }
@@ -13,6 +13,9 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/Annabel369/ESP32FTPServer.git"
+  },
+  "dependencies": {
+    "SD": "*"
   },
   "license": "LGPL-3.0",
   "frameworks": "arduino",
