@@ -1,5 +1,6 @@
-#ifndef FTP_SERVERESP_H
-#define FTP_SERVERESP_H
+#ifndef ESP32FTPSERVER_H  // Ajustado para bater com o nome do arquivo
+#define ESP32FTPSERVER_H
+
 
 #include <SD.h>
 #include <FS.h>
@@ -16,7 +17,7 @@
 class FtpServer {
 public:
   FtpServer();
-  void begin(String uname, String pword);
+  void begin(const char* uname, const char* pword);
   int  handleFTP();
 
 private:
@@ -49,7 +50,8 @@ private:
   uint16_t iCL;
   int8_t cmdStatus, transferStatus;
   uint32_t millisTimeOut, millisEndConnection, bytesTransfered;
-  String _FTP_USER, _FTP_PASS;
+  char _FTP_USER[32];
+  char _FTP_PASS[32];
   bool isSecure = false; 
 };
 #endif
