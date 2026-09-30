@@ -1,7 +1,7 @@
-#ifndef ESP32FTPSERVER_H  // Ajustado para bater com o nome do arquivo
+#ifndef ESP32FTPSERVER_H
 #define ESP32FTPSERVER_H
 
-
+// Inclusões de bibliotecas padrão do sistema
 #include <SD.h>
 #include <FS.h>
 #include <WiFi.h>
@@ -12,6 +12,11 @@
 #include <ArduinoJson.h>
 #include <ESP32Servo.h>
 #include <TJpg_Decoder.h>
+
+// 1. Inclui PRIMEIRO a sua configuração personalizada
+#include "User_Setup_Custom.h"
+
+// 2. Inclui a TFT_eSPI DEPOIS da configuração carregada
 #include <TFT_eSPI.h>
 
 #define FTP_CTRL_PORT      21  
