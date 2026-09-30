@@ -3,10 +3,10 @@ ESP32FTPServer (Secure Edition 2026)
 <img width="1533" height="670" alt="image" src="https://github.com/user-attachments/assets/75b34b53-9936-4109-aabe-1fac28db4d34" />
 
 
-Version 1.0.8 - Professional FTP Server for Espressif ESP32 with Explicit TLS/SSL support and SD Card storage.
+Version 1.1.3 - Professional FTP Server for Espressif ESP32 with Explicit TLS/SSL support and SD Card storage.
 
 This version is the result of months of optimization, specifically designed to handle the ESP32 Core 3.3.5+ architecture, providing high security and rock-solid stability for personal use and IoT projects.
-📝 What's New in Version 1.0.8?
+📝 What's New in Version 1.1.3?
 
 Compared to version 1.0.7, this release introduces professional-grade security and networking fixes:
 
@@ -32,7 +32,7 @@ Compared to version 1.0.7, this release introduces professional-grade security a
 
     Go to Sketch -> Include Library -> Manage Libraries...
 
-    Search for ESP32FtpServer and install version 1.0.8.
+    Search for ESP32FtpServer and install version 1.1.3.
 
     Note: Ensure you are using ESP32 Board Manager version 3.0.0 or higher.
 
