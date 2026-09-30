@@ -89,49 +89,10 @@ To ensure 100% stability with the ESP32 hardware:
 
 <img width="1013" height="399" alt="image" src="https://github.com/user-attachments/assets/2efdb55c-3907-404e-893c-d16786665200" />
 
-# option Custon 
+🎨 Custom TFT_eSPI Setup
+
     //#include <User_Setup.h>           // Default setup is root library folder
     #include "../ESP32FtpServer/src/User_Setup_Custom.h"
-
-⚖️ License & Credits
-
-Licensed under the LGPL-3.0 License.
-
----
-
-## 📜 Open Source Governance, Standardization, and Reflections
-
-One of the ongoing discussions in the embedded development and Arduino ecosystem revolves around library naming conventions, namespace management, and open-source governance.
-
-### ⚠️️ The Challenge of Naming Collisions (`SD.h`, `WiFi.h`, etc.)
-
-When the Arduino team originally introduced the Library Manager, generic names like `SD`, `WiFi`, and `Ethernet` were established for legacy AVR architectures (such as the Arduino Uno). As hardware evolved and Espressif released the **ESP32**, core libraries maintained these identical header names (`SD.h`, `WiFi.h`) to preserve backward compatibility with existing codebases and examples.
-
-However, the absence of explicit namespaces or architecture-specific prefixes (such as `ESP32_SD` or `Arduino_SD`) creates two fundamental issues within the open-source community:
-
-1. **Compatibility Ambiguity:** Compiler conflicts occur when multiple libraries share identical file names, leading to resolution ambiguities when building across different platforms.
-2. **Authorship and Precedence:** Overlapping generic names can obscure original authorship and the historical precedence of independent developers who first authored and published solutions under those names.
-
-### 💡 Scopes and Package Management Standards
-
-Modern package managers (such as Node.js `npm`, Rust `Cargo`, or Python `PyPI`) address this problem using **scoped packages/namespaces** (e.g., `@annabel369/sd` vs. `@espressif/sd`). 
-
-By explicitly declaring dependencies within `library.properties` and `library.json`, this library ensures transparent dependency resolution while fully respecting the underlying ESP32 core architecture.
-
-Maintained by: Amauri Bueno dos Santos (2026). Based on original works by MollySophia and robo8080.
-For the library to be recognized by the Arduino Registry, it follows this structure:
-https://github.com/MollySophia/ESP32_FTPServer_SD (which again is based on https://github.com/robo8080/ESP32_FTPServer_SD) 
-
-## 🔮 Legacy and Project Continuity
-
-This project was built with dedication, extensive testing, AI assistance, and research to deliver a stable FTP Server solution for ESP32 devices (such as the ESP32-2432S028R).
-
-In the true spirit of Open Source and the Linux community:
-* **Forking & Evolution:** Anyone in the community is welcome to fork this repository, improve the codebase, fix bugs, or add new features.
-* **Attribution:** If you create a derivative work (e.g., `ESP32FtpServer2` or an extended version), please preserve the original credits and license (LGPL-3.0).
-* **Maintenance:** If you are interested in becoming a co-maintainer or contributing via Pull Requests, feel free to open an issue or reach out.
-
-  ---
 
 ## 🛠️ Open Source Hardware & Custom PCB Design
 
@@ -147,5 +108,41 @@ For makers and developers looking to build, customize, or produce their own boar
   - Upgrade to ESP32 modules featuring extended **PSRAM / SPI Flash** for larger network buffers and enhanced TLS throughput.
   - Custom pinout adaptations for **E-Paper / E-Ink** displays, perfect for ultra-low-power status dashboards and FTP server monitoring.
 
-Modified to better support subdirectories
-## Status: Versão 1.1.4 Estável (2026) - Assinada com YubiKey
+
+## 📜 Open Source Governance, Standardization, and Reflections
+
+One of the ongoing discussions in the embedded development and Arduino ecosystem revolves around library naming conventions, namespace management, and open-source governance.
+
+### ⚠️️ The Challenge of Naming Collisions (`SD.h`, `WiFi.h`, etc.)
+
+When the Arduino team originally introduced the Library Manager, generic names like `SD`, `WiFi`, and `Ethernet` were established for legacy AVR architectures (such as the Arduino Uno). As hardware evolved and Espressif released the **ESP32**, core libraries maintained these identical header names (`SD.h`, `WiFi.h`) to preserve backward compatibility with existing codebases and examples.
+
+However, the absence of explicit namespaces or architecture-specific prefixes (such as `ESP32_SD` or `Arduino_SD`) creates two fundamental issues within the open-source community:
+
+1. **Compatibility Ambiguity:** Compiler conflicts occur when multiple libraries share identical file names, leading to resolution ambiguities when building across different platforms.
+2. **Authorship and Precedence:** Overlapping generic names can obscure original authorship and the historical precedence of independent developers who first authored and published solutions under those names.
+
+### 💡 Scopes and Package Management Standards
+Modern package managers (such as Node.js npm, Rust Cargo, or Python PyPI) address this problem using scoped packages/namespaces (e.g., @annabel369/sd vs. @espressif/sd).
+
+By explicitly declaring dependencies within library.properties and library.json, this library ensures transparent dependency resolution while fully respecting the underlying ESP32 core architecture.
+
+### 🔮 Legacy and Project Continuity
+This project was built with dedication, extensive testing, AI assistance, and research to deliver a stable FTP Server solution for ESP32 devices (such as the ESP32-2432S028R).
+
+In the true spirit of Open Source and the Linux community:
+
+1. **Forking & Evolution: Anyone in the community is welcome to fork this repository, improve the codebase, fix bugs, or add new features.
+
+2. **Attribution: If you create a derivative work (e.g., ESP32FtpServer2 or an extended version), please preserve the original credits and license (LGPL-3.0).
+
+3. **Maintenance: If you are interested in becoming a co-maintainer or contributing via Pull Requests, feel free to open an issue or reach out.
+
+### ⚖️ License & Credits
+Licensed under the LGPL-3.0 License.
+
+Maintained by: Amauri Bueno dos Santos (2026).
+
+Based on original works by MollySophia and robo8080.
+
+Status: Versão 1.1.4 Estável (2026) - Assinada com YubiKey
