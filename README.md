@@ -132,4 +132,4 @@ In the true spirit of Open Source and the Linux community:
 * **Maintenance:** If you are interested in becoming a co-maintainer or contributing via Pull Requests, feel free to open an issue or reach out.
 
 Modified to better support subdirectories
-## Status: Versão 1.0.8 Estável (2026) - Assinada com YubiKey
+## Status: Versão 1.1.3 Estável (2026) - Assinada com YubiKey
