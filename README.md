@@ -1,12 +1,5 @@
 ESP32FTPServer (Secure Edition 2026)
 
-<img width="1013" height="399" alt="image" src="https://github.com/user-attachments/assets/2efdb55c-3907-404e-893c-d16786665200" />
-
-# option Custon 
-    //#include <User_Setup.h>           // Default setup is root library folder
-    #include "../ESP32FtpServer/src/User_Setup_Custom.h"
-
-
 Version 1.0.8 - Professional FTP Server for Espressif ESP32 with Explicit TLS/SSL support and SD Card storage.
 
 This version is the result of months of optimization, specifically designed to handle the ESP32 Core 3.3.5+ architecture, providing high security and rock-solid stability for personal use and IoT projects.
@@ -90,6 +83,12 @@ To ensure 100% stability with the ESP32 hardware:
     Timeout: Set to 60 seconds or 0 (Infinite).
 
     Transfer Settings: Limit the "Maximum number of simultaneous connections" to 1.
+
+<img width="1013" height="399" alt="image" src="https://github.com/user-attachments/assets/2efdb55c-3907-404e-893c-d16786665200" />
+
+# option Custon 
+    //#include <User_Setup.h>           // Default setup is root library folder
+    #include "../ESP32FtpServer/src/User_Setup_Custom.h"
 
 ⚖️ License & Credits
 
