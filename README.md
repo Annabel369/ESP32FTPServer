@@ -122,5 +122,14 @@ Maintained by: Amauri Bueno dos Santos (2026). Based on original works by MollyS
 For the library to be recognized by the Arduino Registry, it follows this structure:
 https://github.com/MollySophia/ESP32_FTPServer_SD (which again is based on https://github.com/robo8080/ESP32_FTPServer_SD) 
 
+## 🔮 Legacy and Project Continuity
+
+This project was built with dedication, extensive testing, AI assistance, and research to deliver a stable FTP Server solution for ESP32 devices (such as the ESP32-2432S028R).
+
+In the true spirit of Open Source and the Linux community:
+* **Forking & Evolution:** Anyone in the community is welcome to fork this repository, improve the codebase, fix bugs, or add new features.
+* **Attribution:** If you create a derivative work (e.g., `ESP32FtpServer2` or an extended version), please preserve the original credits and license (LGPL-3.0).
+* **Maintenance:** If you are interested in becoming a co-maintainer or contributing via Pull Requests, feel free to open an issue or reach out.
+
 Modified to better support subdirectories
 ## Status: Versão 1.0.8 Estável (2026) - Assinada com YubiKey
