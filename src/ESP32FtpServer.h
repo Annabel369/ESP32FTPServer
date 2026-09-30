@@ -6,6 +6,13 @@
 #include <FS.h>
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
+#include <WiFiUdp.h>
+#include <NTPClient.h>
+#include <XPT2046_Touchscreen.h>
+#include <ArduinoJson.h>
+#include <ESP32Servo.h>
+#include <TJpg_Decoder.h>
+#include <TFT_eSPI.h>
 
 #define FTP_CTRL_PORT      21  
 #define FTP_DATA_PORT_PASV 50009 
