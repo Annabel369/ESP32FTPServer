@@ -1,5 +1,6 @@
 #include "ESP32FtpServer.h"
 #include "ESP32FtpServerCert.h"
+#include "User_Setup_Custom.h"
 
 WiFiServer ftpServer(FTP_CTRL_PORT);
 WiFiServer dataServer(FTP_DATA_PORT_PASV);
