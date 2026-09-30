@@ -131,5 +131,21 @@ In the true spirit of Open Source and the Linux community:
 * **Attribution:** If you create a derivative work (e.g., `ESP32FtpServer2` or an extended version), please preserve the original credits and license (LGPL-3.0).
 * **Maintenance:** If you are interested in becoming a co-maintainer or contributing via Pull Requests, feel free to open an issue or reach out.
 
+  ---
+
+## 🛠️ Open Source Hardware & Custom PCB Design
+
+This library is fully tailormade for the **ESP32-2432S028R** ("Amarelinho" / CYD) hardware architecture, utilizing its integrated MicroSD card slot (SPI CS GPIO 5), TFT display, and touchscreen out of the box.
+
+### 📐 PCB Fabrication & Customization
+
+For makers and developers looking to build, customize, or produce their own board variations:
+
+- **Ready-to-Manufacture Gerber Files:** You can easily order custom PCBs through services like [PCBWay](https://www.pcbway.com/).
+- **Aesthetic Customization:** Choose your preferred Solder Mask color (purple, black, white, red, etc.) during fabrication.
+- **Hardware Upgrades:** 
+  - Upgrade to ESP32 modules featuring extended **PSRAM / SPI Flash** for larger network buffers and enhanced TLS throughput.
+  - Custom pinout adaptations for **E-Paper / E-Ink** displays, perfect for ultra-low-power status dashboards and FTP server monitoring.
+
 Modified to better support subdirectories
 ## Status: Versão 1.1.4 Estável (2026) - Assinada com YubiKey
