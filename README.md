@@ -141,8 +141,19 @@ In the true spirit of Open Source and the Linux community:
 ### ⚖️ License & Credits
 Licensed under the LGPL-3.0 License.
 
-Maintained by: Amauri Bueno dos Santos (2026).
+**Maintained by:** Amauri Bueno dos Santos (2026).
 
-Based on original works by MollySophia and robo8080.
+**Acknowledgments and History:**
+This library is a highly specialized and secure fork based on the original generic FTP Server implementations. 
+- Original Arduino Due / Ethernet shield (W5100) work by **Jean-Michel Gallego**.
+- Modified for ESP8266 SPIFFS by **David Paiva**.
+- Maintained and updated in 2017 by **@robo8080**.
+- Maintained and updated in 2019 by **@HenrikSte** (nrikSte).
+- Also based on works by **MollySophia**.
+
+**Why this fork exists:**
+While the original versions by *HenrikSte* and others provide a complete, generic implementation of the FTP protocol (supporting both Active and Passive modes, and various legacy FTP commands), they lack native encryption. 
+
+This 2026 edition was heavily refactored specifically to introduce **FTPS (AUTH TLS)** support and to be tightly coupled and optimized for the **ESP32-2432S028R (CYD)** board. Legacy and redundant FTP commands (such as `CDUP`, `PORT` active mode, etc.) were removed to streamline the codebase for modern FTP clients (which use `CWD ..` and Passive mode `PASV`), focusing the processing power on TLS encryption and hardware-specific features like the TFT display and touch integration.
 
 Status: Versão 1.1.4 Estável (2026) - Assinada com YubiKey
