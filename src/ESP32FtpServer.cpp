@@ -281,6 +281,60 @@ boolean FtpServer::processCommand() {
     } else { clientPtr->println("503 Bad sequence"); }
     rnfrCmd = false;
   }
+  else if (!strcmp(command, "SIZE")) {
+    if (makePath(path)) {
+      File f = SD.open(path, "r");
+      if (f && !f.isDirectory()) {
+        clientPtr->printf("213 %u\r\n", (unsigned)f.size());
+        f.close();
+      } else {
+        clientPtr->println("550 File not found");
+      }
+    }
+  }
+  else if (!strcmp(command, "MDTM")) {
+    if (makePath(path)) {
+      File f = SD.open(path, "r");
+      if (f && !f.isDirectory()) {
+        time_t t = f.getLastWrite(); 
+        if (t) {
+           struct tm *tm = gmtime(&t);
+           clientPtr->printf("213 %04d%02d%02d%02d%02d%02d\r\n", tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
+        } else {
+           clientPtr->println("213 19700101000000"); // Mock time if missing
+        }
+        f.close();
+      } else {
+        clientPtr->println("550 File not found");
+      }
+    }
+  }
+  else if (!strcmp(command, "CDUP")) {
+    char parent[350];
+    strncpy(parent, cwdName, sizeof(parent));
+    if (strlen(parent) > 1 && parent[strlen(parent) - 1] == '/') parent[strlen(parent) - 1] = '\0';
+    char *p = strrchr(parent, '/');
+    if (p) {
+      if (p == parent) strcpy(parent, "/");
+      else *p = '\0';
+    }
+    strncpy(cwdName, parent, sizeof(cwdName) - 1);
+    if (cwdName[strlen(cwdName) - 1] != '/') strcat(cwdName, "/");
+    clientPtr->printf("250 CDUP successful. %s\r\n", cwdName);
+  }
+  else if (!strcmp(command, "ABOR")) {
+    if (transferStatus > 0) {
+      if (file) file.close();
+      data.stop();
+      transferStatus = 0;
+      clientPtr->println("226 Transfer aborted");
+    } else {
+      clientPtr->println("226 No transfer to abort");
+    }
+  }
+  else if (!strcmp(command, "NOOP") || !strcmp(command, "TYPE") || !strcmp(command, "STRU") || !strcmp(command, "MODE")) {
+    clientPtr->println("200 OK");
+  }
   else if (!strcmp(command, "QUIT")) {
     clientPtr->println("221 Goodbye"); 
     clientPtr->stop(); 
